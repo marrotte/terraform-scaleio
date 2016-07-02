@@ -1,7 +1,21 @@
 
 #!/bin/bash
 echo "Installing Requirements"
-sudo yum -ytq install wget libaio numactl
+sudo yum -ytq install wget libaio numactl gcc-c++
+
+echo "Installing bonnie++"
+wget http://www.coker.com.au/bonnie++/bonnie++-1.03e.tgz
+tar -zxvf bonnie++-1.03e.tgz
+cd bonnie++-1.03e
+sudo ./configure
+sudo make
+sudo make install
+
+echo "Installing glances"
+wget https://bootstrap.pypa.io/get-pip.py
+sudo python get-pip.py
+wget -O- http://bit.ly/glances | /bin/bash
+
 echo "Installing MDM"
 sudo rpm -i https://scaleio-source.s3.amazonaws.com/1.32/EMC-ScaleIO-mdm-1.32-403.2.el7.x86_64.rpm
 
@@ -57,5 +71,15 @@ sudo mkfs.ext4 /dev/scinia
 echo "Mounting file system"
 sudo mkdir /mnt_scinia
 sudo mount /dev/scinia /mnt_scinia
+
+echo "Running a bonnie++ test against the new SDS"
+sudo nohup /usr/local/sbin/bonnie++ -d /mnt_scinia -s 8G -n 0 -m ScaleIO -u root:root &
+
+echo "Starting glances"
+nohup glances -s &
+ 
+echo "Done."
+
+sleep 5
 
 EOF
