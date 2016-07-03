@@ -85,11 +85,18 @@ echo "Mounting file system"
 sudo mkdir /mnt_scinia
 sudo mount /dev/scinia /mnt_scinia
 
-echo "Running a bonnie++ test against the new SDS"
-sudo nohup /usr/local/sbin/bonnie++ -d /mnt_scinia -s 8G -n 0 -m ScaleIO -u root:root &
-
+echo "Start bonnie++ & glances on the MDM/SDC"
+sudo nohup /usr/local/sbin/bonnie++ -d /mnt_scinia -n 0 -m ScaleIO -u root:root &
 echo "Starting glances"
 nohup glances -s &
+nohup glances -w -p 80 &
+
+echo "Start bonnie++i & glances on all the SDS/SDC"
+for sds_ip in `cat /tmp/all_sds`; do
+  ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo nohup bash -c "/usr/local/sbin/bonnie++ -d /mnt_scinia -n 0 -m ScaleIO -u root:root &"'
+  ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo nohup bash -c "glances -s &"'
+  ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo nohup bash -c "glances -w -p 80 &"'
+done
  
 echo "Done."
 

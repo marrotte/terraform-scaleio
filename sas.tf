@@ -95,7 +95,23 @@ resource "aws_instance" "sds" {
 	    device_name = "/dev/sdb"
 	    virtual_name = "ephemeral0"
 	  }
-    user_data = "${file("sds_install.sh")}"
+   provisioner "file" {
+        connection {
+            user = "ec2-user"
+            key_file = "${var.key_file}"
+        }
+        source = "sds_install.sh"
+        destination = "/tmp/sds_install.sh"
+    }
+    provisioner "remote-exec" {
+      connection {
+          user = "ec2-user"
+          key_file = "${var.key_file}"
+      }
+      inline = [
+        "sudo sh /tmp/sds_install.sh >> /tmp/install.log",
+      ]
+    }
 }
 
 
@@ -156,6 +172,10 @@ output "MDM_IP" {
 output "MDM Password" {
   value = "admin/password123!"
 }
-output "SDS_IP" {
+output "SDS_SDC_IP (private)" {
   value = "${join(",",aws_instance.sds.*.private_ip)}"
 }
+output "SDS_SDC_IP (public)" {
+  value = "${join(",",aws_instance.sds.*.public_ip)}"
+}
+
