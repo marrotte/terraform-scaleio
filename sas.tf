@@ -125,12 +125,22 @@ resource "aws_instance" "mdm" {
         destination = "/tmp/mdm_install.sh"
     }
 
+    provisioner "file" {
+        connection {
+            user = "ec2-user"
+            key_file = "${var.key_file}"
+        }
+        source = "${var.key_file}" 
+        destination = "~ec2-user/.ssh/scaleio"
+    }
+
     provisioner "remote-exec" {
       connection {
           user = "ec2-user"
           key_file = "${var.key_file}"
       }
       inline = [
+        "sudo chmod 400 ~ec2-user/.ssh/scaleio",
         "echo ${join(" ",aws_instance.sds.*.private_ip)} > /tmp/all_sds",
         "sudo sh /tmp/mdm_install.sh >> /tmp/install.log",
         "sudo sh /tmp/install.sh >> /tmp/install.log"

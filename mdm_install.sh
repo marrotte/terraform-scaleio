@@ -23,7 +23,7 @@ echo "Waiting for SDS list"
 while [ ! -f  /tmp/all_sds ];
 do
     echo "SDS File Not yet Found - Sleeping before continuining"
-    sleep 10
+    sleep 1 
 done
 echo "SDS list found"
 
@@ -47,6 +47,19 @@ sleep 5
 
 for sds_ip in `cat /tmp/all_sds`; do
   scli --add_sds --mdm_ip $MDM --sds_ip $sds_ip --device_path /dev/xvdb --sds_name $sds_ip --protection_domain_name pdomain --storage_pool_name pool1
+done
+
+for sds_ip in `cat /tmp/all_sds`; do
+  ssh -o StrictHostKeyChecking=no -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo MDM_IP='$MDM' rpm -i https://scaleio-source.s3.amazonaws.com/1.32/EMC-ScaleIO-sdc-1.32-403.2.el7.x86_64.rpm'
+  sleep 5;
+  scli --protection_domain_name pdomain --add_volume --storage_pool_name pool1 --size_gb 10 --volume_name vol-$sds_ip
+  sleep 5;
+  scli --map_volume_to_sdc --volume_name vol-$sds_ip --sdc_ip $sds_ip
+  sleep 5;
+  ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo parted -a optimal -- /dev/scinia mklabel gpt mkpart P1 ext4 "1" "-1"'
+  ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo mkfs.ext4 /dev/scinia'
+  ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo mkdir /mnt_scinia'
+  ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo mount /dev/scinia /mnt_scinia'
 done
 
 echo "Installing SDC on MDM"
