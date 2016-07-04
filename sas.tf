@@ -172,10 +172,7 @@ output "MDM_IP" {
 output "MDM Password" {
   value = "admin/password123!"
 }
-output "SDS_SDC_IP (private)" {
-  value = "${join(",",aws_instance.sds.*.private_ip)}"
-}
-output "SDS_SDC_IP (public)" {
-  value = "${join(",",aws_instance.sds.*.public_ip)}"
+output "SDS_SDC_IP (glances)" {
+  value = "${join(",",formatlist("https://%s", aws_instance.sds.*.public_ip))}"
 }
 
