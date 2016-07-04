@@ -1,15 +1,16 @@
 
 #!/bin/bash
 echo "Installing Requirements"
-sudo yum -ytq install wget libaio numactl gcc-c++
+#sudo yum -ytq install wget libaio numactl gcc-c++
+sudo yum -ytq install wget libaio numactl
 
-echo "Installing bonnie++"
-wget http://www.coker.com.au/bonnie++/bonnie++-1.03e.tgz
-tar -zxvf bonnie++-1.03e.tgz
-cd bonnie++-1.03e
-sudo ./configure
-sudo make
-sudo make install
+#echo "Installing bonnie++"
+#wget http://www.coker.com.au/bonnie++/bonnie++-1.03e.tgz
+#tar -zxvf bonnie++-1.03e.tgz
+#cd bonnie++-1.03e
+#sudo ./configure
+#sudo make
+#sudo make install
 
 echo "Installing glances"
 wget https://bootstrap.pypa.io/get-pip.py
@@ -68,7 +69,8 @@ MDM_IP=$MDM rpm -i https://scaleio-source.s3.amazonaws.com/1.32/EMC-ScaleIO-sdc-
 sleep 5;
 
 echo "Creating volume vol01"
-scli --protection_domain_name pdomain --add_volume --storage_pool_name pool1 --size_gb 100 --volume_name vol01
+scli --protection_domain_name pdomain --add_volume --storage_pool_name pool1 --size_gb 10 --volume_name vol01
+sleep 5;
 
 echo "Mapping vol01 to MDM"
 scli --map_volume_to_sdc --volume_name vol01 --sdc_ip $MDM
@@ -85,15 +87,17 @@ echo "Mounting file system"
 sudo mkdir /mnt_scinia
 sudo mount /dev/scinia /mnt_scinia
 
-echo "Start bonnie++ & glances on the MDM/SDC"
-sudo nohup /usr/local/sbin/bonnie++ -d /mnt_scinia -n 0 -m ScaleIO -u root:root &
+#echo "Start bonnie++ & glances on the MDM/SDC"
+#sudo nohup /usr/local/sbin/bonnie++ -x 100 -d /mnt_scinia -n 0 -m ScaleIO -u root:root &
+sudo bash -c "while true; do dd if=/dev/zero of=/mnt_scinia/out.bin bs=1024k count=9000; sync; echo 3 > /proc/sys/vm/drop_caches; dd if=/mnt_scinia/out.bin of=/dev/null; done &"
 echo "Starting glances"
 nohup glances -s &
 nohup glances -w -p 80 &
 
-echo "Start bonnie++i & glances on all the SDS/SDC"
+echo "Start dd & glances on all the SDS/SDC"
 for sds_ip in `cat /tmp/all_sds`; do
-  ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo nohup bash -c "/usr/local/sbin/bonnie++ -d /mnt_scinia -n 0 -m ScaleIO -u root:root &"'
+  #ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo nohup bash -c "/usr/local/sbin/bonnie++ -x 100 -d /mnt_scinia -n 0 -m ScaleIO -u root:root &"'
+  ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo nohup bash -c "while true; do dd if=/dev/zero of=/mnt_scinia/out.bin bs=1024k count=9000; sync; echo 3 > /proc/sys/vm/drop_caches; dd if=/mnt_scinia/out.bin of=/dev/null; done &"'
   ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo nohup bash -c "glances -s &"'
   ssh -i .ssh/scaleio -t ec2-user@$sds_ip 'sudo nohup bash -c "glances -w -p 80 &"'
 done

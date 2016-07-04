@@ -1,12 +1,13 @@
 #!/bin/bash
-yum -ytq install wget libaio numactl gcc-c++
-echo "Installing bonnie++"
-wget http://www.coker.com.au/bonnie++/bonnie++-1.03e.tgz
-tar -zxvf bonnie++-1.03e.tgz
-cd bonnie++-1.03e
-sudo ./configure
-sudo make
-sudo make install
+#yum -ytq install wget libaio numactl gcc-c++
+yum -ytq install wget libaio numactl 
+#echo "Installing bonnie++"
+#wget http://www.coker.com.au/bonnie++/bonnie++-1.03e.tgz
+#tar -zxvf bonnie++-1.03e.tgz
+#cd bonnie++-1.03e
+#sudo ./configure
+#sudo make
+#sudo make install
 echo "Installing glances"
 wget https://bootstrap.pypa.io/get-pip.py
 sudo python get-pip.py
