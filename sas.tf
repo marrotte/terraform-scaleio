@@ -173,6 +173,6 @@ output "MDM Password" {
   value = "admin/password123!"
 }
 output "SDS_SDC_IP (glances)" {
-  value = "${join(",",formatlist("https://%s", aws_instance.sds.*.public_ip))}"
+  value = "${join(",",formatlist("http://%s", aws_instance.sds.*.public_ip))}"
 }
 
